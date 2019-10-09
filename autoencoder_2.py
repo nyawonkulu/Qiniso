@@ -224,10 +224,11 @@ def training(autoencoder, encoder):
                     batch_size=16,
                     shuffle=True,
                     validation_data=(valid_set[0], valid_set[1]),
-                    callbacks=[TensorBoard(log_dir='C:/Users/213539359/Downloads/AlexNet-Tensorflow-master/logs/'), early]
+                    callbacks=[TensorBoard(early)]
+                    # log_dir='C:/Users/213539359/Downloads/AlexNet-Tensorflow-master/logs/')
                     )
 
-    autoencoder.save('C:/Users/213539359/Downloads/AlexNet-Tensorflow-master/model/autoencoder_3.h5')
+    # autoencoder.save('C:/Users/213539359/Downloads/AlexNet-Tensorflow-master/model/autoencoder_3.h5')
 
     encoded_img = encoder.predict(test_set[0])
     decoded_imgs = autoencoder.predict(test_set[0])
