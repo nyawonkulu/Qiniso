@@ -40,7 +40,7 @@ def load_data():
     below.
     """
     #f = gzip.open('mnist.pkl.gz', 'rb')
-    f = gzip.open('./dataset/file_out.pkl[90].gz', 'rb')
+    f = gzip.open('./file_out.pkl[90].gz', 'rb')
     training_data, test_data = pickle.load(f,  encoding='latin1')
     f.close()
     return training_data, test_data
