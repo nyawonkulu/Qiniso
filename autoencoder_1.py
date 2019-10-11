@@ -17,6 +17,7 @@ from scipy import misc, ndimage
 from PIL import Image
 from skimage import data, img_as_float
 from skimage import exposure
+from keras.layers.core import Activation, Reshape
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -27,7 +28,7 @@ import argparse
 
 # from src
 import leukemia_loader
-from tensorflow.python.keras.regularizers import l2
+
 
 DEFAULT_SIZE = (120, 120)
 
@@ -37,94 +38,85 @@ DEFAULT_SIZE = (120, 120)
 def cnn_autoencoder():
     # input_img = Input(shape=(720, 576, 1))  # adapt this if using `channels_first` image data format
     input_img = Input(shape=(120, 120, 1))
-    # 120
-
-    # 128
-    def layer_128(x, k, ed):
-
-        for i in range(k):
-            x = Conv2D(128, (3, 3), activation='relu', padding='same')(x)
-            x = BatchNormalization(momentum=0.1)(x)
-            x = Dropout(0.2)(x)
-
-        x = Conv2D(512, (1, 1), activation='relu', padding='same')(x)
-        x = BatchNormalization(momentum=0.1)(x)
-        x = Dropout(0.2)(x)
-
-        if ed == 0:
-            x = MaxPooling2D((2, 2), padding='same')(x)
-        else:
-            x = UpSampling2D((2, 2))(x)
-        return x
-
-    # 64
-    def layer_64(x, k, ed):
-        #x = ZeroPadding2D(padding=(1, 1), dim_ordering='default')(x)
-        for i in range(k):
-            x = Conv2D(64, (3, 3), activation='relu', padding='same')(x)
-            x = BatchNormalization(momentum=0.1)(x)
-            x = Dropout(0.2)(x)
-
-        x = Conv2D(256, (1, 1), activation='relu', padding='same')(x)
-        x = BatchNormalization(momentum=0.1)(x)
-        x = Dropout(0.2)(x)
-
-        if ed == 0:
-            x = MaxPooling2D((2, 2), padding='same')(x)
-        else:
-            x = UpSampling2D((2, 2))(x)
-
-        return x
 
     # 32
-    def layer_32(x, k, ed):
+    x = Conv2D(32, (3, 3), padding='same')(input_img)
+    x = BatchNormalization(momentum=0.1)(x)
+    x = Activation("relu")(x)
+    x = Dropout(0.2)(x)
 
-        for i in range(k):
-            x = Conv2D(32, (3, 3), activation='relu', padding='same')(x)
-            x = BatchNormalization(momentum=0.1)(x)
-            x = Dropout(0.2)(x)
+    x = Conv2D(32, (3, 3), padding='same')(x)
+    x = BatchNormalization(momentum=0.1)(x)
+    x = Activation("relu")(x)
+    x = Dropout(0.2)(x)
 
-        x = Conv2D(128, (1, 1), activation='relu', padding='same')(x)
-        x = BatchNormalization(momentum=0.1)(x)
-        x = Dropout(0.2)(x)
+    x = MaxPooling2D((2, 2), padding='same')(x)
 
-        if ed == 0:
-            x = MaxPooling2D((2, 2), padding='same')(x)
-        else:
-            x = UpSampling2D((2, 2))(x)
+    # 64
+    x = Conv2D(64, (3, 3), padding='same')(x)
+    x = BatchNormalization(momentum=0.1)(x)
+    x = Dropout(0.2)(x)
+    x = Activation("relu")(x)
 
-        return x
+    x = Conv2D(64, (3, 3), padding='same')(x)
+    x = BatchNormalization(momentum=0.1)(x)
+    x = Dropout(0.2)(x)
+    x = Activation("relu")(x)
 
-        # 32
-    def layer_16(x, k, ed):
+    x = MaxPooling2D((2, 2), padding='same')(x)
 
-        for i in range(k):
-            x = Conv2D(16, (3, 3), activation='relu', padding='same')(x)
-            x = BatchNormalization(momentum=0.1)(x)
-            x = Dropout(0.2)(x)
+    # 128
+    x = Conv2D(128, (3, 3), padding='same')(x)
+    x = BatchNormalization(momentum=0.1)(x)
+    x = Dropout(0.2)(x)
+    x = Activation("relu")(x)
 
-        x = Conv2D(64, (1, 1), activation='relu', padding='same')(x)
-        x = BatchNormalization(momentum=0.1)(x)
-        x = Dropout(0.2)(x)
+    x = Conv2D(128, (3, 3), padding='same')(x)
+    x = BatchNormalization(momentum=0.1)(x)
+    x = Dropout(0.2)(x)
+    x = Activation("relu")(x)
 
-        if ed == 0:
-            x = MaxPooling2D((2, 2), padding='same')(x)
-        else:
-            x = UpSampling2D((2, 2))(x)
-
-        return x
+    encoded = MaxPooling2D((2, 2), padding='same')(x)
 
     # at this point the representation is (4, 4, 8) i.e. 128-dimensional
 
+    # 128
+    x = Conv2D(128, (3, 3), padding='same')(encoded)
+    x = BatchNormalization(momentum=0.1)(x)
+    x = Dropout(0.2)(x)
+    x = Activation("relu")(x)
 
-    k = 2
+    x = Conv2D(128, (3, 3), padding='same')(x)
+    x = BatchNormalization(momentum=0.1)(x)
+    x = Dropout(0.2)(x)
+    x = Activation("relu")(x)
+    x = UpSampling2D((2, 2))(x)
 
-    x = layer_32(input_img, k, ed=0)
-    x = layer_64(x, k, ed=0)
-    encoded = layer_128(x, k, ed=0)
-    x = layer_128(encoded, k, ed=1)
-    x = layer_64(x, k, ed=1)
-    x = layer_32(x, k, ed=1)
+    # 64
+    x = Conv2D(64, (3, 3), padding='same')(x)
+    x = BatchNormalization(momentum=0.1)(x)
+    x = Dropout(0.2)(x)
+    x = Activation("relu")(x)
+
+    x = Conv2D(64, (3, 3), padding='same')(x)
+    x = BatchNormalization(momentum=0.1)(x)
+    x = Dropout(0.2)(x)
+    x = Activation("relu")(x)
+
+    x = UpSampling2D((2, 2))(x)
+
+    # 32
+    x = Conv2D(32, (3, 3), padding='same')(x)
+    x = BatchNormalization(momentum=0.1)(x)
+    x = Activation("relu")(x)
+    x = Dropout(0.2)(x)
+
+    x = Conv2D(32, (3, 3), padding='same')(x)
+    x = BatchNormalization(momentum=0.1)(x)
+    x = Activation("relu")(x)
+    x = Dropout(0.2)(x)
+
+    x = UpSampling2D((2, 2))(x)
 
     decoded = Conv2D(1, (3, 3), activation='sigmoid', padding='same')(x)
 
@@ -158,7 +150,7 @@ def data_augmentation(x_train_in, x_train_out, augment_size):
 
 
     image_generator = ImageDataGenerator(
-        # rescale=1.0/255.0,
+        #rescale=1.0/255.0,
         rotation_range=10,
         #shear_range=0.8,
         featurewise_center=False,
@@ -193,17 +185,16 @@ def data_augmentation(x_train_in, x_train_out, augment_size):
 def data_preprocessing(x_train, x_test):
         height = 120
         width = 120
-        
-        x_train_in, x_train_out = data_augmentation(x_train[0], x_train[1], augment_size=1000)
-        
 
-        x_train_in = np.reshape(x_train_in, (len(x_train_in), height, width, 1)).astype('float32') / 255
-        x_train_out = np.reshape(x_train_out , (len(x_train_out ), height, width, 1)).astype('float32') / 255
+        x_train_in = np.reshape(x_train[0], (len(x_train[0]), height, width, 1)).astype('float32') / 255
+        x_train_out = np.reshape(x_train[1], (len(x_train[1]), height, width, 1)).astype('float32') / 255
 
         x_test_in = np.reshape(x_test[0], (len(x_test[0]), height, width, 1)).astype('float32') / 255
         x_test_out = np.reshape(x_test[1], (len(x_test[1]), height, width, 1)).astype('float32') / 255
-        
-        valid = int(len(x_train_in) * 0.10)
+
+        # x_train_in, x_train_out = data_augmentation(x_train_in, x_train_out, augment_size=1000)
+
+        valid = int(len(x_train_in) * 0.01)
 
         x_valid_in = x_train_in[-valid:]
         x_valid_out = x_train_out[-valid:]
@@ -239,10 +230,10 @@ def training(autoencoder, encoder):
 
     )
     autoencoder.fit(train_set[0], train_set[1],
-                    epochs=100,
-                    batch_size=32,
+                    epochs=500,
+                    batch_size=8,
                     shuffle=True,
-                    validation_data=(valid_set[0], valid_set[1]),
+                    validation_data=(test_set[0], test_set[1]),
                     callbacks=[early]
                     )
     # TensorBoard(log_dir='C:/Users/213539359/Downloads/AlexNet-Tensorflow-master/logs/'),
