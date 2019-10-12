@@ -38,70 +38,118 @@ DEFAULT_SIZE = (120, 120)
 def cnn_autoencoder():
     # input_img = Input(shape=(720, 576, 1))  # adapt this if using `channels_first` image data format
     input_img = Input(shape=(120, 120, 1))
-
-    # 32
-    x = Conv2D(256, (3, 3), padding='same')(input_img)
+    
+    # 1024
+    x = Conv2D(1024, (3, 3), padding='same')(input_img)
     x = BatchNormalization(momentum=0.1)(x)
-    x = Activation("relu")(x)
-    x = Dropout(0.2)(x)
-
+    x = Dropout(0.5)(x)
     x = MaxPooling2D((2, 2), padding='same')(x)
-
-    # 64
-    x = Conv2D(128, (3, 3), padding='same')(x)
+    x = Activation("relu")(x)
+    
+    # 512
+    x = Conv2D(512, (3, 3), padding='same')(x)
     x = BatchNormalization(momentum=0.1)(x)
-    x = Dropout(0.2)(x)
+    x = Dropout(0.5)(x)
+    x = MaxPooling2D((2, 2), padding='same')(x)
     x = Activation("relu")(x)
 
-
+    # 256
+    x = Conv2D(256, (3, 3), padding='same')(x)
+    x = BatchNormalization(momentum=0.1)(x)
+    x = Dropout(0.5)(x)
     x = MaxPooling2D((2, 2), padding='same')(x)
+    x = Activation("relu")(x)
 
     # 128
-    x = Conv2D(64, (3, 3), padding='same')(x)
+    x = Conv2D(128, (3, 3), padding='same')(x)
     x = BatchNormalization(momentum=0.1)(x)
-    x = Dropout(0.2)(x)
+    x = Dropout(0.5)(x)
+    x = MaxPooling2D((2, 2), padding='same')(x)
     x = Activation("relu")(x)
-    
+        
+    # zero padding
+    x = ZeroPadding2D(padding=(1, 1), data_format=None)(x)
+    # 64
+    x = Conv2D(64, (3, 3), padding='same')(x)    
+    x = BatchNormalization(momentum=0.1)(x)
+    x = Dropout(0.5)(x)
+    x = MaxPooling2D((2, 2), padding='same')(x)
+    x = Activation("relu")(x)
+
+    # 32
     x = Conv2D(32, (3, 3), padding='same')(x)
     x = BatchNormalization(momentum=0.1)(x)
-    x = Dropout(0.2)(x)
+    x = Dropout(0.5)(x)
+    x = MaxPooling2D((2, 2), padding='same')(x)
     x = Activation("relu")(x)
-    
+
+    # 16
+    x = Conv2D(16, (3, 3), padding='same')(x)
+    x = BatchNormalization(momentum=0.1)(x)
+    x = Dropout(0.5)(x)
+    x = MaxPooling2D((2, 2), padding='same')(x)
+    x = Activation("relu")(x)
+
+    # 8
+    x = Conv2D(8, (3, 3), padding='same')(x)
+    x = BatchNormalization(momentum=0.1)(x)
+    x = Dropout(0.5)(x)    
+    x = Activation("relu")(x)
+
     encoded = MaxPooling2D((2, 2), padding='same')(x)
 
     # at this point the representation is (4, 4, 8) i.e. 128-dimensional
 
-    # 128
-    x = Conv2DTranspose(32, (3, 3), padding='same')(encoded)
+    # 8
+    x = UpSampling2D((2, 2))(encoded)
+    x = Conv2DTranspose(8, (3, 3), padding='same')(x)
     x = BatchNormalization(momentum=0.1)(x)
-    x = Dropout(0.2)(x)
+    x = Dropout(0.5)(x)    
     x = Activation("relu")(x)
-    
+
+    # 16
+    x = Conv2DTranspose(16, (3, 3), padding='same')(x)
+    x = BatchNormalization(momentum=0.1)(x)
+    x = Dropout(0.5)(x)
     x = UpSampling2D((2, 2))(x)
-    
+    x = Activation("relu")(x)
+
     # 32
-    x = Conv2DTranspose(64, (3, 3), padding='same')(encoded)
+    x = Conv2DTranspose(32, (3, 3), padding='same')(x)
     x = BatchNormalization(momentum=0.1)(x)
-    x = Dropout(0.2)(x)
+    x = Dropout(0.5)(x)
+    x = UpSampling2D((2, 2))(x)
+    x = Activation("relu")(x)
+
+    # cropping
+    # 64
+    x = Conv2DTranspose(64, (3, 3), padding='same')(x)
+    x = BatchNormalization(momentum=0.1)(x)
+    x = Dropout(0.5)(x)
+    x = UpSampling2D((2, 2))(x)
     x = Activation("relu")(x)
     
-    x = UpSampling2D((2, 2))(x)
-    
-    # 64
+    # 128
+    x = Cropping2D(cropping=((1, 1), (1, 1)))(x)
     x = Conv2DTranspose(128, (3, 3), padding='same')(x)
     x = BatchNormalization(momentum=0.1)(x)
-    x = Dropout(0.2)(x)
+    x = Dropout(0.5)(x)
+    x = UpSampling2D((2, 2))(x)
     x = Activation("relu")(x)
 
-    x = UpSampling2D((2, 2))(x)
-
-    # 32
+    # 120
     x = Conv2DTranspose(256, (3, 3), padding='same')(x)
     x = BatchNormalization(momentum=0.1)(x)
-    x = Activation("relu")(x)
-    x = Dropout(0.2)(x)
-
+    x = Dropout(0.5)(x)
     x = UpSampling2D((2, 2))(x)
+    x = Activation("relu")(x)
+
+    # 120
+    x = Conv2DTranspose(256, (3, 3), padding='same')(x)
+    x = BatchNormalization(momentum=0.1)(x)
+    x = Dropout(0.5)(x)
+    x = UpSampling2D((2, 2))(x)
+    x = Activation("relu")(x)
 
     decoded = Conv2D(1, (3, 3), activation='sigmoid', padding='same')(x)
 
