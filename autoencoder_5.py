@@ -65,7 +65,7 @@ def cnn_autoencoder():
 
     pool_2 = MaxPooling2D((2, 2))(conv_4)
 
-    padding = ZeroPadding2D(padding=(1, 1), dim_ordering='default')(pool_2)
+    padding = ZeroPadding2D(padding=(1, 1), data_format=None)(pool_2)
     conv_5 = Conv2D(256, (3, 3), padding='same')(padding)
     conv_5 = BatchNormalization()(conv_5)
     conv_5 = Activation('relu')(conv_5)
@@ -202,6 +202,7 @@ def data_augmentation(x_train_in, x_train_out, augment_size):
         height_shift_range=0.2,
         horizontal_flip=True,
         vertical_flip=True,
+        data_format='channels_first'
         #preprocessing_function=histogram_equalization
     )
 

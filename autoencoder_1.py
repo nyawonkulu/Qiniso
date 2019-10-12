@@ -6,7 +6,7 @@ Created on Fri Sep 13 02:11:36 2019
 """
 
 from keras.layers import Input, Dense, Conv2D, MaxPooling2D, UpSampling2D, Cropping2D, ZeroPadding2D, \
-    Dropout, BatchNormalization
+    Dropout, BatchNormalization, Conv2DTranspose
 from keras.models import Model
 from keras.datasets import mnist
 from keras import backend as K
@@ -40,12 +40,7 @@ def cnn_autoencoder():
     input_img = Input(shape=(120, 120, 1))
 
     # 32
-    x = Conv2D(32, (3, 3), padding='same')(input_img)
-    x = BatchNormalization(momentum=0.1)(x)
-    x = Activation("relu")(x)
-    x = Dropout(0.2)(x)
-
-    x = Conv2D(32, (3, 3), padding='same')(x)
+    x = Conv2D(256, (3, 3), padding='same')(input_img)
     x = BatchNormalization(momentum=0.1)(x)
     x = Activation("relu")(x)
     x = Dropout(0.2)(x)
@@ -53,52 +48,47 @@ def cnn_autoencoder():
     x = MaxPooling2D((2, 2), padding='same')(x)
 
     # 64
-    x = Conv2D(64, (3, 3), padding='same')(x)
+    x = Conv2D(128, (3, 3), padding='same')(x)
     x = BatchNormalization(momentum=0.1)(x)
     x = Dropout(0.2)(x)
     x = Activation("relu")(x)
 
-    x = Conv2D(64, (3, 3), padding='same')(x)
-    x = BatchNormalization(momentum=0.1)(x)
-    x = Dropout(0.2)(x)
-    x = Activation("relu")(x)
 
     x = MaxPooling2D((2, 2), padding='same')(x)
 
     # 128
-    x = Conv2D(128, (3, 3), padding='same')(x)
+    x = Conv2D(64, (3, 3), padding='same')(x)
     x = BatchNormalization(momentum=0.1)(x)
     x = Dropout(0.2)(x)
     x = Activation("relu")(x)
-
-    x = Conv2D(128, (3, 3), padding='same')(x)
+    
+    x = Conv2D(32, (3, 3), padding='same')(x)
     x = BatchNormalization(momentum=0.1)(x)
     x = Dropout(0.2)(x)
     x = Activation("relu")(x)
-
+    
     encoded = MaxPooling2D((2, 2), padding='same')(x)
 
     # at this point the representation is (4, 4, 8) i.e. 128-dimensional
 
     # 128
-    x = Conv2D(128, (3, 3), padding='same')(encoded)
+    x = Conv2DTranspose(32, (3, 3), padding='same')(encoded)
     x = BatchNormalization(momentum=0.1)(x)
     x = Dropout(0.2)(x)
     x = Activation("relu")(x)
-
-    x = Conv2D(128, (3, 3), padding='same')(x)
-    x = BatchNormalization(momentum=0.1)(x)
-    x = Dropout(0.2)(x)
-    x = Activation("relu")(x)
+    
     x = UpSampling2D((2, 2))(x)
-
-    # 64
-    x = Conv2D(64, (3, 3), padding='same')(x)
+    
+    # 32
+    x = Conv2DTranspose(64, (3, 3), padding='same')(encoded)
     x = BatchNormalization(momentum=0.1)(x)
     x = Dropout(0.2)(x)
     x = Activation("relu")(x)
-
-    x = Conv2D(64, (3, 3), padding='same')(x)
+    
+    x = UpSampling2D((2, 2))(x)
+    
+    # 64
+    x = Conv2DTranspose(128, (3, 3), padding='same')(x)
     x = BatchNormalization(momentum=0.1)(x)
     x = Dropout(0.2)(x)
     x = Activation("relu")(x)
@@ -106,12 +96,7 @@ def cnn_autoencoder():
     x = UpSampling2D((2, 2))(x)
 
     # 32
-    x = Conv2D(32, (3, 3), padding='same')(x)
-    x = BatchNormalization(momentum=0.1)(x)
-    x = Activation("relu")(x)
-    x = Dropout(0.2)(x)
-
-    x = Conv2D(32, (3, 3), padding='same')(x)
+    x = Conv2DTranspose(256, (3, 3), padding='same')(x)
     x = BatchNormalization(momentum=0.1)(x)
     x = Activation("relu")(x)
     x = Dropout(0.2)(x)
