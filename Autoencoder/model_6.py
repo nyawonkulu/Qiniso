@@ -19,6 +19,7 @@ from scipy import misc, ndimage
 from PIL import Image
 from skimage import data, img_as_float
 from skimage import exposure
+from keras.layers import Concatenate
 from keras.layers.core import Activation, Reshape
 from keras.regularizers import l2
 from keras.constraints import maxnorm
@@ -38,120 +39,82 @@ import dataset_loader
 def create_model():
     # input_img = Input(shape=(720, 576, 1))  # adapt this if using `channels_first` image data format
     input_img = Input(shape=(120, 120, 1))
-
+    
+    """======================================================================================================================================"""
     # 256: 120
-    x = Conv2D(256, (1, 1), padding='same', kernel_regularizer=l2(0.0001), kernel_constraint=maxnorm(3))(input_img)
-    x = BatchNormalization(momentum=0.1)(x)
-    x = Activation('relu')(x)
-    x = Dropout(0.5)(x)
-
-
-
-    x = Conv2D(256, (3, 3), padding='same', kernel_regularizer=l2(0.0001), kernel_constraint=maxnorm(3))(x)
-    x = BatchNormalization(momentum=0.1)(x)
-    x = Activation('relu')(x)
-    x = Dropout(0.5)(x)
-    x = MaxPooling2D((2, 2), padding='same')(x)
-
+    y1 = Conv2D(16, (3, 3), padding='same', strides=1, activation='relu')(input_img)
+    y1 = Conv2D(16, (3, 3), padding='same', strides=1, activation='relu')(y1)
+    
+    x1 = MaxPooling2D((2, 2), (2,2),  padding='same')(y1)
+    
     # 128:60
-    x = Conv2D(128, (1, 1), padding='same',    kernel_regularizer=l2(0.0001), kernel_constraint=maxnorm(3))(x)
-    x = BatchNormalization(momentum=0.1)(x)
-    x = Dropout(0.5)(x)
-    x = Activation('relu')(x)
-
-
-    x = Conv2D(128, (3, 3), padding='same',   kernel_regularizer=l2(0.0001), kernel_constraint=maxnorm(3))(x)
-    x = BatchNormalization(momentum=0.1)(x)
-    x = Dropout(0.5)(x)
-    x = Activation('relu')(x)
-    x = MaxPooling2D((2, 2), padding='same')(x)
+    """======================================================================================================================================"""
+    y2 = Conv2D(32, (3, 3), padding='same', strides=1, activation='relu')(x1)
+    y2 = Conv2D(32, (3, 3), padding='same', strides=1, activation='relu')(y2)
+    
+    x2 = MaxPooling2D((2, 2), (2, 2), padding='same')(y2)
 
     # 64 : 30 == 32
-    x = Conv2D(64, (1, 1), padding='same',   kernel_regularizer=l2(0.0001), kernel_constraint=maxnorm(3))(x)
-    x = BatchNormalization(momentum=0.1)(x)
-    x = Dropout(0.5)(x)
-    x = Activation('relu')(x)
- 
-    x = Conv2D(64, (3, 3), padding='same',   kernel_regularizer=l2(0.0001), kernel_constraint=maxnorm(3))(x)
-    x = BatchNormalization(momentum=0.1)(x)
-    x = Dropout(0.5)(x)
-    x = Activation('relu')(x)
-    x = ZeroPadding2D(padding=(1, 1), dim_ordering='default')(x)
-    x = MaxPooling2D((2, 2), padding='same')(x)
+    """======================================================================================================================================"""
+    y3 = ZeroPadding2D(padding=(1, 1), dim_ordering='default')(x2)
+    y3 = Conv2D(64, (3, 3), padding='same', strides=1, activation='relu')(y3)
+    y3 = Conv2D(64, (3, 3), padding='same', strides=1, activation='relu')(y3)
+        
+    x3 = MaxPooling2D((2, 2), (2,2), padding='same')(y3)
+    
+    # 32: 15 == 16
+    """======================================================================================================================================"""    
+    y4 = Conv2D(128, (3, 3), padding='same', strides=1, activation='relu')(x3)
+    y4 = Conv2D(128, (3, 3), padding='same', strides=1, activation='relu')(y4)
+    
+    x4 = MaxPooling2D((2, 2), (2,2),  padding='same')(y4)
 
     # 32: 15 == 16
-    x = Conv2D(32, (1, 1), padding='same',   kernel_regularizer=l2(0.0001), kernel_constraint=maxnorm(3))(x)
-    x = BatchNormalization(momentum=0.1)(x)
-    x = Dropout(0.5)(x)
-    x = Activation('relu')(x)
 
-    x = Conv2D(32, (3, 3), padding='same',   kernel_regularizer=l2(0.0001), kernel_constraint=maxnorm(3))(x)
-    x = BatchNormalization(momentum=0.1)(x)
-    x = Dropout(0.5)(x)
-    x = Activation('relu')(x)
+    """======================================================================================================================================"""
 
-    encoded = MaxPooling2D((2, 2), padding='same')(x)
+    y6 = Conv2D(256, (3, 3), padding='same', strides=1, activation='relu')(x4)
+    encoded = Conv2D(256, (3, 3), padding='same', strides=1, activation='relu')(y6)
 
+    """======================================================================================================================================"""
     # at this point the representation is (4, 4, 8) i.e. 128-dimensional
+    u1 = UpSampling2D((2, 2))(encoded)
+    u1 = Concatenate()([u1, y4])
 
-    # 32
-    x = Conv2DTranspose(32, (3, 3), padding='same',   kernel_regularizer=l2(0.0001), kernel_constraint=maxnorm(3))(encoded)
-    x = BatchNormalization(momentum=0.1)(x)
-    x = Dropout(0.5)(x)
-    x = Activation('relu')(x)
-
-    x = Conv2DTranspose(32, (1, 1), padding='same',   kernel_regularizer=l2(0.0001), kernel_constraint=maxnorm(3))(encoded)
-    x = BatchNormalization(momentum=0.1)(x)
-    x = Dropout(0.5)(x)
-    x = Activation('relu')(x)
-    x = UpSampling2D((2, 2))(x)
-
-    # 64
-    x = Conv2DTranspose(64, (3, 3), padding='same',   kernel_regularizer=l2(0.0001), kernel_constraint=maxnorm(3))(x)
-    x = BatchNormalization(momentum=0.1)(x)
-    x = Dropout(0.5)(x)
-    x = Activation('relu')(x)
-
-    x = Conv2DTranspose(64, (1, 1), padding='same',   kernel_regularizer=l2(0.0001), kernel_constraint=maxnorm(3))(x)
-    x = BatchNormalization(momentum=0.1)(x)
-    x = Dropout(0.5)(x)
-    x = Activation('relu')(x)
-    x = UpSampling2D((2, 2))(x)
-
-    # 128
-    x = Conv2DTranspose(128, (3, 3), padding='same',   kernel_regularizer=l2(0.0001), kernel_constraint=maxnorm(3))(x)
-    x = BatchNormalization(momentum=0.1)(x)
-    x = Dropout(0.5)(x)
-    x = Activation('relu')(x)
+    u1 = Conv2DTranspose(128, (3, 3), padding='same', strides=1, activation='relu')(u1)
+    u1 = Conv2DTranspose(128, (3, 3), padding='same', strides=1, activation='relu')(u1)
     
-    x = Conv2DTranspose(128, (1, 1), padding='same',   kernel_regularizer=l2(0.0001), kernel_constraint=maxnorm(3))(x)
-    x = BatchNormalization(momentum=0.1)(x)
-    x = Dropout(0.5)(x)
-    x = Activation('relu')(x)
-    x = Cropping2D(cropping=((1, 1), (1, 1)))(x)
-    x = UpSampling2D((2, 2))(x)
+    # 32
+    """======================================================================================================================================"""
+    u2 = UpSampling2D((2, 2))(u1)
+    u2 = Concatenate()([u2, y3])
 
-    # 256
-    x = Conv2DTranspose(256, (3, 3), padding='same',   kernel_regularizer=l2(0.0001), kernel_constraint=maxnorm(3))(x)
-    x = BatchNormalization(momentum=0.1)(x)
-    x = Activation('relu')(x)
-    x = Dropout(0.5)(x)
+    u2 = Conv2DTranspose(64, (3, 3), padding='same', strides=1, activation='relu')(u2)
+    u2 = Conv2DTranspose(64, (3, 3), padding='same', strides=1, activation='relu')(u2)
+    
+    """======================================================================================================================================"""
+    u3 = Cropping2D(cropping=((1, 1), (1, 1)))(u2)
+    u3 = UpSampling2D((2, 2))(u3)    
+    u3 = Concatenate()([u3, y2])
 
-    x = Conv2DTranspose(256, (1, 1), padding='same',   kernel_regularizer=l2(0.0001), kernel_constraint=maxnorm(3))(x)
-    x = BatchNormalization(momentum=0.1)(x)
-    x = Activation('relu')(x)
-    x = Dropout(0.5)(x)
+    u3 = Conv2DTranspose(32, (3, 3), padding='same', strides=1, activation='relu')(u3)
+    u3 = Conv2DTranspose(32, (3, 3), padding='same', strides=1, activation='relu')(u3)
+    
+    """======================================================================================================================================"""
+    u4 = UpSampling2D((2, 2))(u3)
+    u4 = Concatenate()([u4, y1])
 
-    x = UpSampling2D((2, 2))(x)
-
-    decoded = Conv2D(1, (3, 3), activation='sigmoid', padding='same', kernel_regularizer=l2(0.01),
-                     bias_regularizer=l2(0.01))(x)
+    u4 = Conv2DTranspose(16, (3, 3), padding='same', strides=1, activation='relu')(u4)
+    u4 = Conv2DTranspose(16, (3, 3), padding='same', strides=1, activation='relu')(u4)
+    
+    """======================================================================================================================================"""
+    decoded = Conv2DTranspose(1, (1, 1), activation='sigmoid', padding='same')(u4) # ,  kernel_regularizer=l2(0.0001), kernel_constraint=maxnorm(3)
 
     autoencoder = Model(input_img, decoded)
 
-    encoder = Model(input_img, encoded)
-
     autoencoder.summary()
+
+    encoder = Model(input_img, encoded)
 
     return autoencoder, encoder
 
