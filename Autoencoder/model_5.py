@@ -39,7 +39,7 @@ import dataset_loader
 def create_model():
     # input_img = Input(shape=(720, 576, 1))  # adapt this if using `channels_first` image data format
     input_img = Input(shape=(120, 120, 1))
-
+    """======================================================================================================================================"""
     # 256: 120
     y1 = Conv2D(16, (3, 3), padding='same', strides=1, activation='relu',kernel_regularizer=l2(0.0001), kernel_constraint=maxnorm(3))(input_img)
     y1 = BatchNormalization(momentum=0.1)(y1)
@@ -89,7 +89,7 @@ def create_model():
     x4 = MaxPooling2D((2, 2), (2,2),  padding='same')(y4)
 
     # 32: 15 == 16
-  
+
     """======================================================================================================================================"""
 
     y6 = Conv2D(256, (3, 3), padding='same', strides=1, activation='relu', kernel_regularizer=l2(0.0001),kernel_constraint=maxnorm(3))(x4)
