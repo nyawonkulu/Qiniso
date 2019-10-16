@@ -41,107 +41,84 @@ def create_model():
 
     # 32: 15 == 16
     """======================================================================================================================================"""
-    x = Conv2D(32, (3, 3), padding='same', kernel_regularizer=l2(0.0001))(input_img)
-    x = Activation('relu')(x)
-    x = Conv2D(32, (3, 3), padding='same', kernel_regularizer=l2(0.0001))(x)
-    x = Activation('relu')(x)
-         
+    x = Conv2D(256, (3, 3), padding='same', strides=1, activation='relu')(input_img)
+    x = Conv2D(256, (3, 3), padding='same', strides=1, activation='relu')(x)
+             
     x = BatchNormalization(momentum=0.1)(x)
-    x = Dropout(0.2)(x)
+    x = Dropout(0.5)(x)
 
     x = MaxPooling2D((2, 2), padding='same')(x)
-    # 64 : 30 == 32
-    """======================================================================================================================================"""       
-    x = Conv2D(64, (3, 3), padding='same', kernel_regularizer=l2(0.0001))(x)
-    x = Activation('relu')(x)
-    x = Conv2D(64, (3, 3), padding='same', kernel_regularizer=l2(0.0001))(x)
-    x = Activation('relu')(x)
     
+    """======================================================================================================================================"""       
+    x = Conv2D(128, (3, 3), padding='same', strides=1, activation='relu')(x)
+    x = Conv2D(128, (3, 3), padding='same', strides=1, activation='relu')(x)
+        
     x = BatchNormalization(momentum=0.1)(x)
-    x = Dropout(0.2)(x)
+    x = Dropout(0.5)(x)
         
     x = MaxPooling2D((2, 2), padding='same')(x)
 
-    # 128:60
     """======================================================================================================================================"""
     x = ZeroPadding2D(padding=(1, 1), dim_ordering='default')(x)
     
-    x = Conv2D(128, (3, 3), padding='same', kernel_regularizer=l2(0.0001))(x)
-    x = Activation('relu')(x)
-    x = Conv2D(128, (3, 3), padding='same', kernel_regularizer=l2(0.0001))(x)
-    x = Activation('relu')(x)
-    
+    x = Conv2D(64, (3, 3), padding='same', strides=1, activation='relu')(x)
+    x = Conv2D(64, (3, 3), padding='same', strides=1, activation='relu')(x)
+        
     x = BatchNormalization(momentum=0.1)(x)
-    x = Dropout(0.2)(x)
+    x = Dropout(0.5)(x)
         
     x = MaxPooling2D((2, 2), padding='same')(x)
 
-    # 256: 120
     """======================================================================================================================================"""
-    x = Conv2D(256, (3, 3), padding='same', kernel_regularizer=l2(0.0001))(x)
-    x = Activation('relu')(x)
-    
-    x = Conv2D(256, (3, 3), padding='same', kernel_regularizer=l2(0.0001))(x)
-    x = Activation('relu')(x)
+    x = Conv2D(32, (3, 3), padding='same', strides=1, activation='relu')(x)
+    x = Conv2D(32, (3, 3), padding='same', strides=1, activation='relu')(x)
 
     x = BatchNormalization(momentum=0.1)(x)
-    x = Dropout(0.2)(x)
+    x = Dropout(0.5)(x)
     
     x = MaxPooling2D((2, 2), padding='same')(x)
 
     """===================================================ENCODED===================================================================="""
-    x = Conv2D(512, (3, 3), padding='same')(x)
-    x = Activation('relu')(x)
+    x = Conv2D(16, (3, 3), padding='same', activation='relu')(x)
+    encoded = Conv2D(16, (3, 3), padding='same', activation='relu')(x)
 
-    x = Conv2D(512, (3, 3), padding='same')(x)
-    encoded = Activation('relu')(x)
-    # at this point the representation is (4, 4, 8) i.e. 128-dimensional
-
-    # 256: 120
     """===================================================DECODER==========================================================================="""
     x = UpSampling2D((2, 2))(encoded)
     
-    x = Conv2DTranspose(256, (3, 3), padding='same', kernel_regularizer=l2(0.0001))(x)
-    x = Activation('relu')(x)
-    x = Conv2DTranspose(256, (3, 3), padding='same', kernel_regularizer=l2(0.0001))(x)
-    x = Activation('relu')(x)
-    
+    x = Conv2DTranspose(32, (3, 3), padding='same', strides=1, activation='relu')(x)
+    x = Conv2DTranspose(32, (3, 3), padding='same', strides=1, activation='relu')(x)
+
     x = BatchNormalization(momentum=0.1)(x)    
-    x = Dropout(0.2)(x)
+    x = Dropout(0.5)(x)
     
     """======================================================================================================================================"""    
     x = UpSampling2D((2, 2))(x)
     
-    x = Conv2DTranspose(128, (3, 3), padding='same', kernel_regularizer=l2(0.0001))(x)
-    x = Activation('relu')(x)
-    x = Conv2DTranspose(128, (3, 3), padding='same', kernel_regularizer=l2(0.0001))(x)
-    x = Activation('relu')(x)
+    x = Conv2DTranspose(64, (3, 3), padding='same', strides=1, activation='relu')(x)
     
+    x = Conv2DTranspose(64, (3, 3), padding='same', strides=1, activation='relu')(x)
+
     x = BatchNormalization(momentum=0.1)(x)    
-    x = Dropout(0.2)(x)
+    x = Dropout(0.5)(x)
     
     """======================================================================================================================================"""
     x = Cropping2D(cropping=((1, 1), (1, 1)))(x)
     x = UpSampling2D((2, 2))(x)
     
-    x = Conv2DTranspose(64, (3, 3), padding='same', kernel_regularizer=l2(0.0001))(x)
-    x = Activation('relu')(x)
-    x = Conv2DTranspose(64, (3, 3), padding='same', kernel_regularizer=l2(0.0001))(x)
-    x = Activation('relu')(x)
-    
+    x = Conv2DTranspose(128, (3, 3), padding='same', strides=1, activation='relu')(x)
+    x = Conv2DTranspose(128, (3, 3), padding='same', strides=1, activation='relu')(x)
+
     x = BatchNormalization(momentum=0.1)(x)    
-    x = Dropout(0.2)(x)
+    x = Dropout(0.5)(x)
     
     """======================================================================================================================================"""
     x = UpSampling2D((2, 2))(x)
     
-    x = Conv2DTranspose(32, (3, 3), padding='same', kernel_regularizer=l2(0.0001))(x)
-    x = Activation('relu')(x)
-    x = Conv2DTranspose(32, (3, 3), padding='same', kernel_regularizer=l2(0.0001))(x)
-    x = Activation('relu')(x)
-    
+    x = Conv2DTranspose(256, (3, 3), padding='same', strides=1, activation='relu')(x)
+    x = Conv2DTranspose(256, (3, 3), padding='same', strides=1, activation='relu')(x)
+
     x = BatchNormalization(momentum=0.1)(x)    
-    x = Dropout(0.2)(x)
+    x = Dropout(0.5)(x)
     
     """======================================================================================================================================"""
     
