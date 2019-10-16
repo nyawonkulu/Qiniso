@@ -1,4 +1,5 @@
 # Save augmented images to file
+
 import gzip
 import pickle
 import matplotlib.pyplot as plt
@@ -10,7 +11,6 @@ import os
 
 from skimage import exposure
 
-import leukemia_loader
 import transformations
 
 
