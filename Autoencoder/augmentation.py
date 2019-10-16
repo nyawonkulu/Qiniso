@@ -18,7 +18,7 @@ import transformations
 def aug():
     # load data
     print('\nAUGMENTING DATASET....')
-    train, test = dataset_loader.load_data_wrapper()
+    train, test = leukemia_loader.load_data_wrapper()
 
     X_train = train[0]
     Y_train = train[1]
