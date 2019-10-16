@@ -21,6 +21,7 @@ from skimage import data, img_as_float
 from skimage import exposure
 from keras.layers.core import Activation, Reshape
 from keras.regularizers import l2
+from keras.constraints import maxnorm
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -39,53 +40,53 @@ def create_model():
     input_img = Input(shape=(120, 120, 1))
 
     # 256: 120
-    x = Conv2D(64, (3, 3), padding='same')(input_img)
+    x = Conv2D(64, (3, 3), padding='same', kernel_regularizer=l2(0.0001), kernel_constraint=maxnorm(3))(input_img)
     x = BatchNormalization(momentum=0.1)(x)
     x = Activation('relu')(x)
     x = Dropout(0.2)(x)
-    x = MaxPooling2D((2, 2), padding='same')(x)
+    x = MaxPooling2D((2, 2), padding='same', kernel_regularizer=l2(0.0001), kernel_constraint=maxnorm(3))(x)
 
     # 128:60
-    x = Conv2D(32, (3, 3), padding='same')(x)
+    x = Conv2D(32, (3, 3), padding='same', kernel_regularizer=l2(0.0001), kernel_constraint=maxnorm(3))(x)
     x = BatchNormalization(momentum=0.1)(x)
     x = Dropout(0.2)(x)
     x = Activation('relu')(x)
-    x = MaxPooling2D((2, 2), padding='same')(x)
+    x = MaxPooling2D((2, 2), padding='same', kernel_regularizer=l2(0.0001), kernel_constraint=maxnorm(3))(x)
 
     # 64 : 30 == 32
-    x = Conv2D(16, (3, 3), padding='same')(x)
+    x = Conv2D(16, (3, 3), padding='same', kernel_regularizer=l2(0.0001), kernel_constraint=maxnorm(3))(x)
     x = BatchNormalization(momentum=0.1)(x)
     x = Dropout(0.2)(x)
     x = Activation('relu')(x)
     x = ZeroPadding2D(padding=(1, 1), dim_ordering='default')(x)
-    x = MaxPooling2D((2, 2), padding='same')(x)
+    x = MaxPooling2D((2, 2), padding='same', kernel_regularizer=l2(0.0001), kernel_constraint=maxnorm(3))(x)
 
     # 32: 15 == 16
-    x = Conv2D(8, (3, 3), padding='same')(x)
+    x = Conv2D(8, (3, 3), padding='same', kernel_regularizer=l2(0.0001), kernel_constraint=maxnorm(3))(x)
     x = BatchNormalization(momentum=0.1)(x)
     x = Dropout(0.2)(x)
     x = Activation('relu')(x)
 
-    encoded = MaxPooling2D((2, 2), padding='same')(x)
+    encoded = MaxPooling2D((2, 2), padding='same', kernel_regularizer=l2(0.0001), kernel_constraint=maxnorm(3))(x)
 
     # at this point the representation is (4, 4, 8) i.e. 128-dimensional
 
     # 32
-    x = Conv2DTranspose(8, (3, 3), padding='same')(encoded)
+    x = Conv2DTranspose(8, (3, 3), padding='same', kernel_regularizer=l2(0.0001), kernel_constraint=maxnorm(3))(encoded)
     x = BatchNormalization(momentum=0.1)(x)
     x = Dropout(0.2)(x)
     x = Activation('relu')(x)
     x = UpSampling2D((2, 2))(x)
 
     # 64
-    x = Conv2DTranspose(16, (3, 3), padding='same')(x)
+    x = Conv2DTranspose(16, (3, 3), padding='same', kernel_regularizer=l2(0.0001), kernel_constraint=maxnorm(3))(x)
     x = BatchNormalization(momentum=0.1)(x)
     x = Dropout(0.2)(x)
     x = Activation('relu')(x)
     x = UpSampling2D((2, 2))(x)
 
     # 128
-    x = Conv2DTranspose(32, (3, 3), padding='same')(x)
+    x = Conv2DTranspose(32, (3, 3), padding='same', kernel_regularizer=l2(0.0001), kernel_constraint=maxnorm(3))(x)
     x = BatchNormalization(momentum=0.1)(x)
     x = Dropout(0.2)(x)
     x = Activation('relu')(x)
@@ -93,13 +94,14 @@ def create_model():
     x = UpSampling2D((2, 2))(x)
 
     # 256
-    x = Conv2DTranspose(64, (3, 3), padding='same')(x)
+    x = Conv2DTranspose(64, (3, 3), padding='same', kernel_regularizer=l2(0.0001), kernel_constraint=maxnorm(3))(x)
     x = BatchNormalization(momentum=0.1)(x)
     x = Activation('relu')(x)
     x = Dropout(0.2)(x)
     x = UpSampling2D((2, 2))(x)
 
-    decoded = Conv2D(1, (3, 3), activation='sigmoid',  padding='same')(x)
+    decoded = Conv2D(1, (3, 3), activation='sigmoid', padding='same', kernel_regularizer=l2(0.0001),
+                     kernel_constraint=maxnorm(3))(x)
 
     autoencoder = Model(input_img, decoded)
 
@@ -112,10 +114,12 @@ def create_model():
 
 """================================TRAINING=========================="""
 
+"""================================TRAINING=========================="""
 
-def training(autoencoder, encoder, augment):
+
+def training(autoencoder, encoder, augment, batch):
     sgd = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)  # Adam(lr=0.01)
-    autoencoder.compile(optimizer=sgd, loss='binary_crossentropy', metrics=['accuracy', 'mse', 'mae', 'mape'])
+    autoencoder.compile(optimizer=sgd, loss='binary_crossentropy', metrics=['accuracy'])
 
     x_train, x_test = dataset_loader.load_data_wrapper()
     train_set, test_set, valid_set = dataset_loader.data_preprocessing(x_train, x_test, augment)
@@ -130,9 +134,9 @@ def training(autoencoder, encoder, augment):
 
     autoencoder.fit(train_set[0], train_set[1],
                     epochs=500,
-                    batch_size=128,
+                    batch_size=batch,
                     shuffle=True,
-                    validation_data=(valid_set[0], valid_set [1]),
+                    validation_data=(valid_set[0], valid_set[1]),
                     callbacks=[early]
                     )
     # TensorBoard(log_dir='C:/Users/213539359/Downloads/AlexNet-Tensorflow-master/logs/'),
@@ -179,14 +183,11 @@ def display(x_test, decoded_imgs, encoded_imgs):
 
 def aug_size():
     val = int(input("ENTER AUGMENTATION SIZE: "))
-    return val
-
-def loss(model, original):
-  reconstruction_error = tf.reduce_mean(tf.square(tf.subtract(model(original), original)))
-  return reconstruction_error
+    batch = int(input("ENTER BATCH SIZE: "))
+    return val, batch
 
 
 autoencoder, encoder = create_model()
-val = aug_size()
-x_test, decoded_imgs, encoded_img = training(autoencoder, encoder, val)
+val, batch = aug_size()
+x_test, decoded_imgs, encoded_img = training(autoencoder, encoder, val, batch)
 display(x_test, decoded_imgs, encoded_img)
