@@ -39,7 +39,6 @@ import dataset_loader
 def create_model():
     # input_img = Input(shape=(720, 576, 1))  # adapt this if using `channels_first` image data format
     input_img = Input(shape=(120, 120, 1))
-    
     """======================================================================================================================================"""
     # 256: 120
     y1 = Conv2D(16, (3, 3), padding='same', strides=1, activation='relu')(input_img)
