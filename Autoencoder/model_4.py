@@ -41,84 +41,92 @@ def create_model():
 
     # 32: 15 == 16
     """======================================================================================================================================"""
+    """
     x = Conv2D(256, (3, 3), padding='same', strides=1, activation='relu')(input_img)
     x = Conv2D(256, (3, 3), padding='same', strides=1, activation='relu')(x)
              
-    x = BatchNormalization(momentum=0.1)(x)
+    x = BatchNormalization()(x)    
     x = Dropout(0.5)(x)
 
     x = MaxPooling2D((2, 2), padding='same')(x)
-    
+    """
     """======================================================================================================================================"""       
-    x = Conv2D(128, (3, 3), padding='same', strides=1, activation='relu')(x)
+    x = Conv2D(128, (3, 3), padding='same', strides=1, activation='relu')(input_img)
     x = Conv2D(128, (3, 3), padding='same', strides=1, activation='relu')(x)
         
-    x = BatchNormalization(momentum=0.1)(x)
+    x = BatchNormalization()(x)    
     x = Dropout(0.5)(x)
         
     x = MaxPooling2D((2, 2), padding='same')(x)
 
     """======================================================================================================================================"""
+
+    x = Conv2D(64, (3, 3), padding='same', strides=1, activation='relu')(x)
+    x = Conv2D(64, (3, 3), padding='same', strides=1, activation='relu')(x)
+        
+    x = BatchNormalization()(x)    
+    x = Dropout(0.5)(x)
+        
+    x = MaxPooling2D((2, 2), padding='same')(x)
+
+    """======================================================================================================================================"""
+
     x = ZeroPadding2D(padding=(1, 1), dim_ordering='default')(x)
-    
-    x = Conv2D(64, (3, 3), padding='same', strides=1, activation='relu')(x)
-    x = Conv2D(64, (3, 3), padding='same', strides=1, activation='relu')(x)
-        
-    x = BatchNormalization(momentum=0.1)(x)
-    x = Dropout(0.5)(x)
-        
-    x = MaxPooling2D((2, 2), padding='same')(x)
 
-    """======================================================================================================================================"""
     x = Conv2D(32, (3, 3), padding='same', strides=1, activation='relu')(x)
     x = Conv2D(32, (3, 3), padding='same', strides=1, activation='relu')(x)
 
-    x = BatchNormalization(momentum=0.1)(x)
+    x = BatchNormalization()(x)    
     x = Dropout(0.5)(x)
     
     x = MaxPooling2D((2, 2), padding='same')(x)
 
     """===================================================ENCODED===================================================================="""
+    
     x = Conv2D(16, (3, 3), padding='same', activation='relu')(x)
     encoded = Conv2D(16, (3, 3), padding='same', activation='relu')(x)
 
     """===================================================DECODER==========================================================================="""
+    
     x = UpSampling2D((2, 2))(encoded)
     
-    x = Conv2DTranspose(32, (3, 3), padding='same', strides=1, activation='relu')(x)
-    x = Conv2DTranspose(32, (3, 3), padding='same', strides=1, activation='relu')(x)
+    x = Conv2D(32, (3, 3), padding='same', strides=1, activation='relu')(x)
+    x = Conv2D(32, (3, 3), padding='same', strides=1, activation='relu')(x)
 
-    x = BatchNormalization(momentum=0.1)(x)    
+    x = BatchNormalization()(x)    
+    x = Dropout(0.5)(x)
+    
+    """======================================================================================================================================"""
+
+    x = Cropping2D(cropping=((1, 1), (1, 1)))(x)
+
+    x = UpSampling2D((2, 2))(x)
+    
+    x = Conv2D(64, (3, 3), padding='same', strides=1, activation='relu')(x)
+    x = Conv2D(64, (3, 3), padding='same', strides=1, activation='relu')(x)
+
+    x = BatchNormalization()(x)    
     x = Dropout(0.5)(x)
     
     """======================================================================================================================================"""    
+
     x = UpSampling2D((2, 2))(x)
     
-    x = Conv2DTranspose(64, (3, 3), padding='same', strides=1, activation='relu')(x)
-    
-    x = Conv2DTranspose(64, (3, 3), padding='same', strides=1, activation='relu')(x)
+    x = Conv2D(128, (3, 3), padding='same', strides=1, activation='relu')(x)
+    x = Conv2D(128, (3, 3), padding='same', strides=1, activation='relu')(x)
 
-    x = BatchNormalization(momentum=0.1)(x)    
+    x = BatchNormalization()(x)    
     x = Dropout(0.5)(x)
     
     """======================================================================================================================================"""
-    x = Cropping2D(cropping=((1, 1), (1, 1)))(x)
+    """
     x = UpSampling2D((2, 2))(x)
     
-    x = Conv2DTranspose(128, (3, 3), padding='same', strides=1, activation='relu')(x)
-    x = Conv2DTranspose(128, (3, 3), padding='same', strides=1, activation='relu')(x)
+    x = Conv2D(256, (3, 3), padding='same', strides=1, activation='relu')(x)
+    x = Conv2D(256, (3, 3), padding='same', strides=1, activation='relu')(x)
 
-    x = BatchNormalization(momentum=0.1)(x)    
     x = Dropout(0.5)(x)
-    
-    """======================================================================================================================================"""
-    x = UpSampling2D((2, 2))(x)
-    
-    x = Conv2DTranspose(256, (3, 3), padding='same', strides=1, activation='relu')(x)
-    x = Conv2DTranspose(256, (3, 3), padding='same', strides=1, activation='relu')(x)
-
-    x = BatchNormalization(momentum=0.1)(x)    
-    x = Dropout(0.5)(x)
+    """
     
     """======================================================================================================================================"""
     
@@ -136,9 +144,10 @@ def create_model():
 """================================TRAINING=========================="""
 
 
-def training(autoencoder, encoder, augment, batch):
-    sgd = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)  # Adam(lr=0.01)
-    autoencoder.compile(optimizer=sgd, loss='binary_crossentropy', metrics=['accuracy'])
+def training(autoencoder, encoder, augment, batch, epoch):
+    # sgd = SGD(lr=0.1, decay=1e-6, momentum=0.9, nesterov=True)  #
+    opt = Adam(lr=0.01)
+    autoencoder.compile(optimizer=opt, loss='mean_squared_error', metrics=['accuracy', 'mean_squared_error'])
 
     x_train, x_test = dataset_loader.load_data_wrapper()
     train_set, test_set, valid_set = dataset_loader.data_preprocessing(x_train, x_test, augment)
@@ -152,7 +161,7 @@ def training(autoencoder, encoder, augment, batch):
     )
 
     autoencoder.fit(train_set[0], train_set[1],
-                    epochs=500,
+                    epochs=epoch,
                     batch_size=batch,
                     shuffle=True,
                     validation_data=(valid_set[0], valid_set[1]),
@@ -203,10 +212,11 @@ def display(x_test, decoded_imgs, encoded_imgs):
 def aug_size():
     val = int(input("ENTER AUGMENTATION SIZE: "))
     batch = int(input("ENTER BATCH SIZE: "))
-    return val, batch
+    epochs = int(input("ENTER EPOCHS: "))
+    return val, batch, epochs
 
 
 autoencoder, encoder = create_model()
-val, batch = aug_size()
-x_test, decoded_imgs, encoded_img = training(autoencoder, encoder, val, batch)
+val, batch, epochs = aug_size()
+x_test, decoded_imgs, encoded_img = training(autoencoder, encoder, val, batch, epochs)
 display(x_test, decoded_imgs, encoded_img)
