@@ -1,5 +1,4 @@
 # Save augmented images to file
-
 import gzip
 import pickle
 import matplotlib.pyplot as plt
@@ -17,6 +16,14 @@ import transformations
 """===================================DATA AUGMENTATION=============================="""
 def aug():
     # load data
+
+    from scipy import misc
+    from scipy.ndimage import gaussian_filter
+
+    def gaussian(x):
+        ascent = x.ascent()
+        return gaussia_filter(ascent, sigma=5)
+
     print('\nAUGMENTING DATASET....')
     train, test = leukemia_loader.load_data_wrapper()
 
@@ -30,7 +37,9 @@ def aug():
                                                            rotation_range=30,
                                                            shift_x_range=0.2, shift_y_range=0.2)
 
-    datagen = ImageDataGenerator()
+    datagen = ImageDataGenerator(
+        preprocessing_function=gaussian
+    )
 
     empty = np.zeros((120, 120, 1))
     # fit parameters from data
@@ -43,7 +52,7 @@ def aug():
     
     batch = X_transformed.shape[0]
 
-    for X_batch, y_batch in datagen.flow(X_transformed, Y_transformed, batch_size=batch, shuffle=False):
+    for X_batch, y_batch in datagen.flow(X_transformed, Y_transformed, batch_size=batch, shuffle=True):
         for i in range(0, batch):
             if not np.array_equal(X_batch[i], empty):
                 main.append(X_batch[i])                                              
@@ -81,10 +90,9 @@ def load_file():
 def display_(training_data):
     plt.figure(figsize=(10, 10))
  
-    for image in range(10):
+    for image in range(5000, 5020):
         plt.imshow(training_data[0][image].reshape(120, 120))
         plt.show()
         
         plt.imshow(training_data[1][image].reshape(120, 120))
         plt.show()
-
