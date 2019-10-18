@@ -101,11 +101,18 @@ def data_preprocessing(x_train, x_test, augment):
 
     return train_set, test_set, valid_set
 
-
 def normalize(input_d, output_d):
     height = 120
     width = 120
 
-    x = np.reshape(input_d, (len(input_d), height, width, 1)).astype('float32') / 255
-    y = np.reshape(output_d, (len(output_d), height, width, 1)).astype('float32') / 255
+    x = np.reshape(input_d, (-1, height, width, 1)).astype('float32')
+    y = np.reshape(output_d, (-1, height, width, 1)).astype('float32')
+
+    mean = np.mean(x)
+    std = np.std(x)
+
+    x -= mean
+    x /=std
+
+    y /= 255.
     return np.asarray(x), np.asarray(y)
